@@ -1,11 +1,12 @@
 @echo off
+chcp 65001 >nul
 setlocal EnableExtensions EnableDelayedExpansion
 :: ==================================================
 :: PAINEL DE SUPORTE TECNICO - COMPLETO
 :: Criado por Felipe Wehmuth - 2025
 :: ==================================================
 title Painel de Suporte Tecnico
-mode con: cols=95 lines=40
+mode con: cols=95 lines=60
 
 :: =====================================
 :: CONFIGURACOES GERAIS (edite aqui)
@@ -82,6 +83,15 @@ goto MENU
 :: =====================================
 :MENU
 cls
+echo █   █ █████ █     ████      ████  █████  ████ █   █   
+echo █░  █░█░░░░░█░    █░░░█     █░░░█ █░░░░░█ ░░░░█░ █ ░  
+echo █████░████░░█░░   ████░░    █░░░█░████░░░███░░███ ░ ░ 
+echo █░░░█░█░░░░ █░░   █░░░░ ░█  █░░ █░█░░░░   ░░█ █░░█ ░  
+echo █░░░█░█████░█████ █░░░░░ █░ ████ ░█████░████░░█░░░█   
+echo  ░░  ░░░░░░░ ░░░░░ ░░     ░░ ░░░░ ░░░░░░ ░░░░ ░░░  ░  
+echo   ░    ░ ░░░░░ ░░░░░ ░        ░  ░░░░  ░░░░░ ░░░░  ░    ░ 
+echo.
+echo.
 echo ===================================================================
 echo                    CRIADO POR FELIPE WEHMUTH
 echo                   FERRAMENTA PARA USO DO TECNICO
@@ -115,11 +125,11 @@ echo [23] Visualizar dispositivos USB conectados
 echo [24] Ver uso de memoria e CPU - Simples
 echo [25] Baixar arquivo via HTTPS (exemplo com PowerShell)
 echo [26] Gerar relatorio de politicas de grupo (gpresult)
+echo [27] Otimizador de Memoria (Swap/RAM)
 echo [U] Atualizar script
 echo [99] Mudar cor
 echo [0]  Sair
 echo.
-
 set /p opcao="Escolha uma opcao: "
 
 :: =====================================
@@ -137,7 +147,7 @@ for /f "delims=0123456789" %%a in ("%opcao%") do (
 )
 
 if %opcao% lss 1 if not "%opcao%"=="0" goto INVALIDA
-if %opcao% gtr 26 if not "%opcao%"=="99" goto INVALIDA
+if %opcao% gtr 27 if not "%opcao%"=="99" goto INVALIDA
 
 goto EXP_%opcao%
 
@@ -183,7 +193,7 @@ if /I "%CONF%"=="S" (
 )
 
 :: =====================================
-:: ROTINAS COMPLETAS EXP_1 ate EXP_28
+:: ROTINAS COMPLETAS EXP_1 ate EXP_26
 :: =====================================
 
 :EXP_1
@@ -353,8 +363,7 @@ goto MENU
 call :INFO "[20] Verificar status de todos os antivirus" "Mostra todos os antivirus instalados e seu status." "Instantaneo" "Nao"
 if "%escolha%"=="1" (
     echo Verificando todos os antivirus instalados...
-    powershell -NoProfile -Command ^
-        "Get-CimInstance -Namespace root\SecurityCenter2 -ClassName AntivirusProduct | ForEach-Object { $_.displayName + ' - Estado: ' + $_.productState }"
+    powershell -NoProfile -Command "Get-CimInstance -Namespace root\SecurityCenter2 -ClassName AntivirusProduct | ForEach-Object { $_.displayName + ' - Estado: ' + $_.productState }"
     echo.
     echo ===== FIM DA VERIFICACAO =====
     pause
@@ -392,7 +401,6 @@ cls
 echo [24] Ver uso de memoria e CPU - Simples
 echo ----------------------------------------
 echo.
-
 :: Memoria (via CIM/PowerShell - compativel com versoes recentes do Windows)
 for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).TotalVisibleMemorySize"`) do set MemTotalKB=%%A
 for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory"`) do set MemLivreKB=%%A
@@ -445,6 +453,176 @@ if "%escolha%"=="1" (
 )
 goto MENU
 
+:EXP_27
+call :INFO "[27] Otimizador de Memoria (Swap/RAM)" "Abre submenu com ferramentas para liberar memoria RAM: fechar processos pesados, limpar temporarios, esvaziar lixeira, limpar standby list, reiniciar Explorer e otimizacao completa." "Variavel" "Pode fechar programas abertos (risco de perda de trabalho nao salvo)"
+if not "%escolha%"=="1" goto MENU
+call :LOG "Abriu Otimizador de Memoria (Swap/RAM)"
+goto MENU_MEM
+
+:MENU_MEM
+cls
+echo ===============================================================
+echo            OTIMIZADOR DE MEMORIA WINDOWS (SWAP/RAM)
+echo ===============================================================
+echo.
+echo [1] Exibir uso de memoria
+echo [2] Fechar processos pesados (navegadores, Discord, Spotify, etc.)
+echo [3] Limpar arquivos temporarios
+echo [4] Esvaziar Lixeira
+echo [5] Limpar Standby List (requer RAMMap.exe na pasta do painel)
+echo [6] Reiniciar Windows Explorer
+echo [7] Otimizacao Completa (executa 2 a 6 em sequencia)
+echo [0] Voltar ao menu principal
+echo.
+set /p opmem="Escolha uma opcao: "
+
+if "%opmem%"=="1" goto MEM_USO
+if "%opmem%"=="2" goto MEM_PROCESSOS
+if "%opmem%"=="3" goto MEM_TEMP
+if "%opmem%"=="4" goto MEM_LIXEIRA
+if "%opmem%"=="5" goto MEM_RAMMAP
+if "%opmem%"=="6" goto MEM_EXPLORER
+if "%opmem%"=="7" goto MEM_COMPLETO
+if "%opmem%"=="0" goto MENU
+goto MENU_MEM
+
+:MEM_USO
+cls
+echo ================= USO DE MEMORIA =================
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).TotalVisibleMemorySize"`) do set MemTotalKB=%%A
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory"`) do set MemLivreKB=%%A
+
+set /a MemTotalMB=MemTotalKB/1024
+set /a MemLivreMB=MemLivreKB/1024
+set /a MemUsadaMB=MemTotalMB-MemLivreMB
+set /a MemPercent=(MemUsadaMB*100)/MemTotalMB
+
+echo Memoria Total:  %MemTotalMB% MB
+echo Memoria Livre:  %MemLivreMB% MB
+echo Memoria Usada:  %MemUsadaMB% MB  [%MemPercent%%]
+echo.
+pause
+goto MENU_MEM
+
+:MEM_PROCESSOS
+cls
+call :LOG "Otimizador de Memoria: fechar processos pesados"
+echo Fechando processos pesados...
+taskkill /F /IM chrome.exe >nul 2>&1
+taskkill /F /IM msedge.exe >nul 2>&1
+taskkill /F /IM firefox.exe >nul 2>&1
+taskkill /F /IM opera.exe >nul 2>&1
+taskkill /F /IM discord.exe >nul 2>&1
+taskkill /F /IM spotify.exe >nul 2>&1
+taskkill /F /IM Teams.exe >nul 2>&1
+taskkill /F /IM steam.exe >nul 2>&1
+taskkill /F /IM OneDrive.exe >nul 2>&1
+echo.
+echo Processos finalizados.
+pause
+goto MENU_MEM
+
+:MEM_TEMP
+cls
+call :LOG "Otimizador de Memoria: limpar arquivos temporarios"
+echo Limpando arquivos temporarios...
+
+del /f /s /q "%temp%\*" >nul 2>&1
+for /d %%x in ("%temp%\*") do rd /s /q "%%x" >nul 2>&1
+
+del /f /s /q "C:\Windows\Temp\*" >nul 2>&1
+for /d %%x in ("C:\Windows\Temp\*") do rd /s /q "%%x" >nul 2>&1
+
+echo.
+echo Limpeza concluida.
+pause
+goto MENU_MEM
+
+:MEM_LIXEIRA
+cls
+call :LOG "Otimizador de Memoria: esvaziar Lixeira"
+echo Esvaziando Lixeira...
+PowerShell.exe -NoProfile -Command "Clear-RecycleBin -Force" >nul 2>&1
+echo.
+echo Lixeira esvaziada.
+pause
+goto MENU_MEM
+
+:MEM_RAMMAP
+cls
+if exist "%~dp0RAMMap.exe" (
+    call :LOG "Otimizador de Memoria: limpar Standby List (RAMMap)"
+    echo Limpando Standby List...
+    "%~dp0RAMMap.exe" -E
+    echo.
+    echo Memoria otimizada.
+) else (
+    echo.
+    echo RAMMap.exe nao encontrado.
+    echo Coloque o RAMMap.exe na mesma pasta deste painel.
+)
+pause
+goto MENU_MEM
+
+:MEM_EXPLORER
+cls
+call :LOG "Otimizador de Memoria: reiniciar Explorer"
+echo Reiniciando Explorer...
+taskkill /F /IM explorer.exe >nul 2>&1
+timeout /t 2 >nul
+start explorer.exe
+echo.
+echo Explorer reiniciado.
+pause
+goto MENU_MEM
+
+:MEM_COMPLETO
+cls
+call :LOG "Otimizador de Memoria: otimizacao completa"
+echo ================= OTIMIZACAO COMPLETA =================
+
+echo.
+echo [1/5] Fechando processos...
+taskkill /F /IM chrome.exe >nul 2>&1
+taskkill /F /IM msedge.exe >nul 2>&1
+taskkill /F /IM firefox.exe >nul 2>&1
+taskkill /F /IM opera.exe >nul 2>&1
+taskkill /F /IM discord.exe >nul 2>&1
+taskkill /F /IM spotify.exe >nul 2>&1
+taskkill /F /IM Teams.exe >nul 2>&1
+taskkill /F /IM steam.exe >nul 2>&1
+taskkill /F /IM OneDrive.exe >nul 2>&1
+
+echo.
+echo [2/5] Limpando arquivos temporarios...
+del /f /s /q "%temp%\*" >nul 2>&1
+for /d %%x in ("%temp%\*") do rd /s /q "%%x" >nul 2>&1
+del /f /s /q "C:\Windows\Temp\*" >nul 2>&1
+for /d %%x in ("C:\Windows\Temp\*") do rd /s /q "%%x" >nul 2>&1
+
+echo.
+echo [3/5] Esvaziando Lixeira...
+PowerShell.exe -NoProfile -Command "Clear-RecycleBin -Force" >nul 2>&1
+
+echo.
+echo [4/5] Reiniciando Explorer...
+taskkill /F /IM explorer.exe >nul 2>&1
+timeout /t 2 >nul
+start explorer.exe
+
+echo.
+echo [5/5] Limpando Standby List...
+if exist "%~dp0RAMMap.exe" (
+    "%~dp0RAMMap.exe" -E
+)
+
+echo.
+echo ===============================================================
+echo            OTIMIZACAO CONCLUIDA COM SUCESSO
+echo ===============================================================
+pause
+goto MENU_MEM
+
 :: =====================================
 :: ATUALIZACAO AUTOMATICA DO PAINEL
 :: =====================================
@@ -475,7 +653,8 @@ if exist "%ZIP_PATH%" (
     echo ------------------------
     echo %date% %time%
     echo.
-    echo Conteudo do painel atualizado:
+    
+    echo Conteudo do painel updated:
     echo -----------------------------
     dir /b "%~dp0"
     echo.
