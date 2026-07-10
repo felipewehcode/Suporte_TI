@@ -11,7 +11,7 @@ mode con: cols=95 lines=60
 :: =====================================
 :: CONFIGURACOES GERAIS (edite aqui)
 :: =====================================
-set "VERSAO=1.1.0"
+set "VERSAO=1.2.0"
 set "URL_CHAMADO=https://suporte.exemplo.com"
 set "GITHUB_REPO=https://github.com/felipewehcode/painel_de_suporte/archive/refs/heads/main.zip"
 set "LOG_FILE=%~dp0painel_log.txt"
