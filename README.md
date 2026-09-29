@@ -63,26 +63,19 @@ A opção **27** abre um submenu dedicado, com ferramentas para liberar memória
 ## 🚀 Como usar
 
 1. Baixe o arquivo `.bat` deste repositório.
-2. Clique com o botão direito → **Executar como administrador**.
-3. Digite a senha de acesso local (veja a seção de configuração abaixo).
-4. Escolha uma opção no menu numérico.
+2. Escolha uma opção no menu numérico.
 
 ## ⚙️ Configuração
 
 No topo do script existem variáveis fáceis de editar antes de usar em outro ambiente:
 
 ```bat
-set "VERSAO=1.2.0"
-set "GITHUB_REPO=https://github.com/felipewehcode/painel_de_suporte/archive/refs/heads/main.zip"
-set "SENHA_CORRETA=FW2026"
-```
+set "VERSAO=1.3.0"
 
-`SENHA_CORRETA` por uma senha própria antes de distribuir o script para outras pessoas.
+```
 
 ## ⚠️ Avisos importantes
 
-- **A senha de acesso é apenas uma trava simples local**, armazenada em texto puro no próprio script. Ela **não é** uma medida de segurança real — qualquer pessoa com acesso ao arquivo pode abri-lo em um editor de texto e ler a senha. Serve apenas para evitar que alguém use o painel sem querer, não para proteger dados sensíveis.
-- A opção **U (Atualizar)** baixa um `.zip` do repositório configurado em `GITHUB_REPO` e sobrescreve os arquivos locais **sem verificar assinatura ou hash**. Só aponte essa variável para um repositório em que você confia.
 - Algumas opções são **destrutivas ou exigem reinicialização** (CHKDSK, reset de rede, reset do Windows Update). O script pede uma confirmação extra (S/N) antes de rodar essas.
 - Um arquivo `painel_log.txt` é criado na mesma pasta do script para registrar as ações executadas.
 
