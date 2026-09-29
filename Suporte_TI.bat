@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal EnableExtensions EnableDelayedExpansion
 :: ==================================================
 :: PAINEL DE SUPORTE TECNICO - COMPLETO
-:: Criado por Felipe Wehmuth - 2025
+:: Criado por Felipe Wehmuth - 2026
 :: ==================================================
 title Painel de Suporte Tecnico
 mode con: cols=95 lines=60
@@ -11,9 +11,9 @@ mode con: cols=95 lines=60
 :: =====================================
 :: CONFIGURACOES GERAIS (edite aqui)
 :: =====================================
-set "VERSAO=1.2.0"
+set "VERSAO=1.3.0-seguro"
 set "URL_CHAMADO=https://suporte.exemplo.com"
-set "GITHUB_REPO=https://github.com/felipewehcode/painel_de_suporte/archive/refs/heads/main.zip"
+set "GITHUB_REPO=https://github.com/felipewehcode/painel_de_suporte"
 set "LOG_FILE=%~dp0painel_log.txt"
 
 :: =====================================
@@ -28,28 +28,12 @@ if errorlevel 1 (
 )
 
 :: =====================================
-:: PROTECAO POR SENHA
-:: Obs: isto e apenas uma trava simples de acesso local,
-:: NAO e criptografado e nao deve ser usado como seguranca real.
+:: ACESSO AO PAINEL
 :: =====================================
-set "SENHA_CORRETA=FW2026"
-
-:LOGIN
-cls
-echo =======================================
-echo        PAINEL DE SUPORTE TECNICO
-echo =======================================
-:: Senha digitada nao aparece na tela (via PowerShell -AsSecureString)
-for /f "usebackq delims=" %%p in (`powershell -NoProfile -Command "$s = Read-Host 'Digite a senha de acesso' -AsSecureString; $b = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($s); [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($b)"`) do set "SENHA=%%p"
-if "%SENHA%"=="%SENHA_CORRETA%" (
-    echo Acesso permitido...
-    timeout /t 1 >nul
-    goto COR
-) else (
-    echo Senha incorreta! Tente novamente.
-    timeout /t 2 >nul
-    goto LOGIN
-)
+:: A antiga senha fixa foi removida.
+:: Uma senha gravada dentro de um .BAT publico pode ser lida por qualquer pessoa
+:: e, portanto, nao oferece protecao real.
+goto COR
 
 :: =====================================
 :: ROTINA DE CORES
@@ -106,7 +90,7 @@ echo [4]  Reparo da imagem do Windows (DISM)
 echo [5]  Reset do Windows Update
 echo [6]  Reset de configuracoes de rede
 echo [7]  Atualizacao das politicas de grupo (GPO)
-echo [8]  Limpeza de logs de eventos
+echo [8]  Limpeza seletiva de logs de eventos
 echo [9]  Informacoes do sistema (msinfo32)
 echo [10] Gerenciador de dispositivos
 echo [11] Ver adaptadores de rede
@@ -123,10 +107,10 @@ echo [21] Testar conectividade com o google
 echo [22] Backup dos logs de eventos
 echo [23] Visualizar dispositivos USB conectados
 echo [24] Ver uso de memoria e CPU - Simples
-echo [25] Baixar arquivo via HTTPS (exemplo com PowerShell)
+echo [25] Baixar arquivo via HTTPS
 echo [26] Gerar relatorio de politicas de grupo (gpresult)
 echo [27] Otimizador de Memoria (Swap/RAM)
-echo [U] Atualizar script
+echo [U] Abrir pagina de atualizacao no GitHub
 echo [99] Mudar cor
 echo [0]  Sair
 echo.
@@ -135,7 +119,7 @@ set /p opcao="Escolha uma opcao: "
 :: =====================================
 :: VALIDACAO DE ENTRADA
 :: =====================================
-if /I "%opcao%"=="U" goto ATUALIZAR
+if /I "%opcao%"=="U" goto ABRIR_GITHUB
 if "%opcao%"=="99" goto COR
 if "%opcao%"=="0" exit
 for /f "delims=0123456789" %%a in ("%opcao%") do (
@@ -197,9 +181,11 @@ if /I "%CONF%"=="S" (
 :: =====================================
 
 :EXP_1
-call :INFO "[1] Limpeza de arquivos temporarios" "Apaga arquivos temporarios do Windows que ocupam espaco inutilmente." "1 a 2 minutos" "Nao"
+call :INFO "[1] Limpeza de arquivos temporarios" "Apaga arquivos temporarios do usuario. Arquivos em uso sao ignorados." "1 a 2 minutos" "Nao"
 if "%escolha%"=="1" (
-    del /s /q %temp%\*.* 2>nul
+    call :LOG "Limpeza de temporarios do usuario"
+    del /f /s /q "%TEMP%\*" >nul 2>&1
+    for /d %%x in ("%TEMP%\*") do rd /s /q "%%x" >nul 2>&1
     echo Limpeza concluida!
     pause
 )
@@ -233,33 +219,32 @@ if "%escolha%"=="1" (
 goto MENU
 
 :EXP_5
-call :INFO "[5] Reset do Windows Update" "Reinicia os servicos do Windows Update e limpa caches." "5 a 10 minutos" "Nao"
+call :INFO "[5] Reset do Windows Update" "Reinicia os servicos do Windows Update e recria o cache de atualizacoes." "5 a 10 minutos" "Nao"
 if "%escolha%"=="1" (
-    net stop wuauserv
-    net stop bits
-    rd /s /q %windir%\SoftwareDistribution
-    net start wuauserv
-    net start bits
+    call :CONFIRMAR
+    if errorlevel 1 goto MENU
+    call :LOG "Reset do Windows Update"
+    net stop wuauserv >nul 2>&1
+    net stop bits >nul 2>&1
+    if exist "%WINDIR%\SoftwareDistribution" rd /s /q "%WINDIR%\SoftwareDistribution"
+    net start bits >nul 2>&1
+    net start wuauserv >nul 2>&1
     echo Reset do Windows Update concluido!
 )
 pause
 goto MENU
 
 :EXP_6
-call :INFO "[6] Reset de configuracoes de rede" "Reseta IP, Winsock e configuracoes TCP/IP." "1 a 3 minutos" "Nao"
+call :INFO "[6] Reset de configuracoes de rede" "Reseta DNS, Winsock e configuracoes TCP/IP. Pode interromper temporariamente a conexao." "1 a 3 minutos" "Nao"
 if "%escolha%"=="1" (
-    ipconfig /release
-    ipconfig /renew
-    call :LOG "ipconfig /flushdns"
     call :CONFIRMAR
     if errorlevel 1 goto MENU
+    call :LOG "Reset de configuracoes de rede"
     ipconfig /flushdns
-    call :LOG "netsh winsock reset"
-    call :CONFIRMAR
-    if errorlevel 1 goto MENU
     netsh winsock reset
     netsh int ip reset
     echo Configuracoes de rede resetadas!
+    echo Pode ser necessario reiniciar o computador.
 )
 pause
 goto MENU
@@ -273,10 +258,21 @@ if "%escolha%"=="1" (
 goto MENU
 
 :EXP_8
-call :INFO "[8] Limpeza de logs de eventos" "Limpa todos os logs do Visualizador de Eventos." "1 a 2 minutos" "Nao"
+call :INFO "[8] Limpeza seletiva de logs de eventos" "Faz backup e limpa apenas Application e Setup. O log Security nao e apagado." "1 a 2 minutos" "Nao"
 if "%escolha%"=="1" (
-    for /F "tokens=*" %%G in ('wevtutil el') do wevtutil cl "%%G"
-    echo Logs limpos!
+    call :CONFIRMAR
+    if errorlevel 1 goto MENU
+    call :LOG "Limpeza seletiva de logs: Application e Setup"
+    set "EVENT_BACKUP=%USERPROFILE%\BackupEventos"
+    if not exist "%EVENT_BACKUP%" mkdir "%EVENT_BACKUP%"
+    wevtutil epl Application "%EVENT_BACKUP%\Application.evtx" >nul 2>&1
+    wevtutil epl Setup "%EVENT_BACKUP%\Setup.evtx" >nul 2>&1
+    wevtutil cl Application
+    wevtutil cl Setup
+    echo.
+    echo Backup salvo em "%EVENT_BACKUP%".
+    echo Logs Application e Setup limpos.
+    echo O log Security foi preservado.
 )
 pause
 goto MENU
@@ -379,11 +375,16 @@ if "%escolha%"=="1" (
 goto MENU
 
 :EXP_22
-call :INFO "[22] Backup dos logs de eventos" "Exporta logs de eventos para pasta BackupEventos." "1 a 2 minutos" "Nao"
+call :INFO "[22] Backup dos logs de eventos" "Exporta os logs principais para a pasta BackupEventos." "1 a 2 minutos" "Nao"
 if "%escolha%"=="1" (
-    mkdir "%USERPROFILE%\BackupEventos" 2>nul
-    for /F "tokens=*" %%G in ('wevtutil el') do wevtutil epl "%%G" "%USERPROFILE%\BackupEventos\%%G.evtx"
-    echo Backup concluido!
+    set "EVENT_BACKUP=%USERPROFILE%\BackupEventos"
+    if not exist "%EVENT_BACKUP%" mkdir "%EVENT_BACKUP%"
+    call :LOG "Backup dos logs Application, System, Setup e Security"
+    wevtutil epl Application "%EVENT_BACKUP%\Application.evtx" >nul 2>&1
+    wevtutil epl System "%EVENT_BACKUP%\System.evtx" >nul 2>&1
+    wevtutil epl Setup "%EVENT_BACKUP%\Setup.evtx" >nul 2>&1
+    wevtutil epl Security "%EVENT_BACKUP%\Security.evtx" >nul 2>&1
+    echo Backup concluido em "%EVENT_BACKUP%"!
 )
 pause
 goto MENU
@@ -423,7 +424,7 @@ goto MENU
 
 :EXP_25
 cls
-echo [25] Baixar arquivo via HTTPS (exemplo com PowerShell)
+echo [25] Baixar arquivo via HTTPS
 echo ------------------------------------------------
 set /p "url=Cole o link HTTPS: "
 if "%url%"=="" (
@@ -431,13 +432,42 @@ if "%url%"=="" (
     pause
     goto MENU
 )
+
+echo "%url%" | findstr /I /B /C:"https://" >nul
+if errorlevel 1 (
+    echo ERRO: somente enderecos HTTPS sao permitidos.
+    pause
+    goto MENU
+)
+
 set "downloadPath=%USERPROFILE%\Downloads"
 if not exist "%downloadPath%" mkdir "%downloadPath%"
+
 for %%i in ("%url%") do set "filename=%%~nxi"
 if "%filename%"=="" set "filename=downloaded_file"
 set "destino=%downloadPath%\%filename%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%url%' -OutFile '%destino%'"
-echo Download concluido em %destino%
+
+call :LOG "Download HTTPS solicitado: %url%"
+powershell -NoProfile -Command ^
+  "$ErrorActionPreference='Stop';" ^
+  "$u=[Uri]'%url%';" ^
+  "if($u.Scheme -ne 'https'){ throw 'Somente HTTPS e permitido.' };" ^
+  "Invoke-WebRequest -Uri $u -OutFile '%destino%' -UseBasicParsing;" ^
+  "if(-not (Test-Path -LiteralPath '%destino%')){ throw 'Arquivo nao foi criado.' };" ^
+  "$f=Get-Item -LiteralPath '%destino%';" ^
+  "if($f.Length -le 0){ throw 'Arquivo baixado esta vazio.' };" ^
+  "Write-Host ('Download concluido: ' + $f.FullName);" ^
+  "Write-Host ('Tamanho: ' + $f.Length + ' bytes');" ^
+  "Write-Host ('SHA256: ' + (Get-FileHash -Algorithm SHA256 -LiteralPath $f.FullName).Hash)"
+
+if errorlevel 1 (
+    echo.
+    echo ERRO: o download falhou ou nao passou nas validacoes.
+    if exist "%destino%" del /q "%destino%" >nul 2>&1
+) else (
+    echo.
+    echo Antes de executar o arquivo, confira a origem e o SHA256 quando houver hash oficial.
+)
 pause
 goto MENU
 
@@ -454,7 +484,7 @@ if "%escolha%"=="1" (
 goto MENU
 
 :EXP_27
-call :INFO "[27] Otimizador de Memoria (Swap/RAM)" "Abre submenu com ferramentas para liberar memoria RAM: fechar processos pesados, limpar temporarios, esvaziar lixeira, limpar standby list, reiniciar Explorer e otimizacao completa." "Variavel" "Pode fechar programas abertos (risco de perda de trabalho nao salvo)"
+call :INFO "[27] Otimizador de Memoria (Swap/RAM)" "Abre submenu com ferramentas para liberar memoria RAM: fechar processos pesados, limpar temporarios, esvaziar lixeira, reiniciar Explorer e otimizacao completa." "Variavel" "Pode fechar programas abertos (risco de perda de trabalho nao salvo)"
 if not "%escolha%"=="1" goto MENU
 call :LOG "Abriu Otimizador de Memoria (Swap/RAM)"
 goto MENU_MEM
@@ -469,9 +499,8 @@ echo [1] Exibir uso de memoria
 echo [2] Fechar processos pesados (navegadores, Discord, Spotify, etc.)
 echo [3] Limpar arquivos temporarios
 echo [4] Esvaziar Lixeira
-echo [5] Limpar Standby List (requer RAMMap.exe na pasta do painel)
 echo [6] Reiniciar Windows Explorer
-echo [7] Otimizacao Completa (executa 2 a 6 em sequencia)
+echo [7] Otimizacao Completa (executa 2, 3, 4 e 6 em sequencia)
 echo [0] Voltar ao menu principal
 echo.
 set /p opmem="Escolha uma opcao: "
@@ -480,7 +509,6 @@ if "%opmem%"=="1" goto MEM_USO
 if "%opmem%"=="2" goto MEM_PROCESSOS
 if "%opmem%"=="3" goto MEM_TEMP
 if "%opmem%"=="4" goto MEM_LIXEIRA
-if "%opmem%"=="5" goto MEM_RAMMAP
 if "%opmem%"=="6" goto MEM_EXPLORER
 if "%opmem%"=="7" goto MEM_COMPLETO
 if "%opmem%"=="0" goto MENU
@@ -506,6 +534,9 @@ goto MENU_MEM
 
 :MEM_PROCESSOS
 cls
+echo Esta opcao fecha programas a forca e pode causar perda de trabalho nao salvo.
+call :CONFIRMAR
+if errorlevel 1 goto MENU_MEM
 call :LOG "Otimizador de Memoria: fechar processos pesados"
 echo Fechando processos pesados...
 taskkill /F /IM chrome.exe >nul 2>&1
@@ -548,22 +579,6 @@ echo Lixeira esvaziada.
 pause
 goto MENU_MEM
 
-:MEM_RAMMAP
-cls
-if exist "%~dp0RAMMap.exe" (
-    call :LOG "Otimizador de Memoria: limpar Standby List (RAMMap)"
-    echo Limpando Standby List...
-    "%~dp0RAMMap.exe" -E
-    echo.
-    echo Memoria otimizada.
-) else (
-    echo.
-    echo RAMMap.exe nao encontrado.
-    echo Coloque o RAMMap.exe na mesma pasta deste painel.
-)
-pause
-goto MENU_MEM
-
 :MEM_EXPLORER
 cls
 call :LOG "Otimizador de Memoria: reiniciar Explorer"
@@ -578,11 +593,15 @@ goto MENU_MEM
 
 :MEM_COMPLETO
 cls
+echo A otimizacao completa fecha programas e limpa temporarios.
+echo Salve seu trabalho antes de continuar.
+call :CONFIRMAR
+if errorlevel 1 goto MENU_MEM
 call :LOG "Otimizador de Memoria: otimizacao completa"
 echo ================= OTIMIZACAO COMPLETA =================
 
 echo.
-echo [1/5] Fechando processos...
+echo [1/4] Fechando processos...
 taskkill /F /IM chrome.exe >nul 2>&1
 taskkill /F /IM msedge.exe >nul 2>&1
 taskkill /F /IM firefox.exe >nul 2>&1
@@ -594,27 +613,21 @@ taskkill /F /IM steam.exe >nul 2>&1
 taskkill /F /IM OneDrive.exe >nul 2>&1
 
 echo.
-echo [2/5] Limpando arquivos temporarios...
+echo [2/4] Limpando arquivos temporarios...
 del /f /s /q "%temp%\*" >nul 2>&1
 for /d %%x in ("%temp%\*") do rd /s /q "%%x" >nul 2>&1
 del /f /s /q "C:\Windows\Temp\*" >nul 2>&1
 for /d %%x in ("C:\Windows\Temp\*") do rd /s /q "%%x" >nul 2>&1
 
 echo.
-echo [3/5] Esvaziando Lixeira...
+echo [3/4] Esvaziando Lixeira...
 PowerShell.exe -NoProfile -Command "Clear-RecycleBin -Force" >nul 2>&1
 
 echo.
-echo [4/5] Reiniciando Explorer...
+echo [4/4] Reiniciando Explorer...
 taskkill /F /IM explorer.exe >nul 2>&1
 timeout /t 2 >nul
 start explorer.exe
-
-echo.
-echo [5/5] Limpando Standby List...
-if exist "%~dp0RAMMap.exe" (
-    "%~dp0RAMMap.exe" -E
-)
 
 echo.
 echo ===============================================================
@@ -624,45 +637,8 @@ pause
 goto MENU_MEM
 
 :: =====================================
-:: ATUALIZACAO AUTOMATICA DO PAINEL
+:: ABRIR PAGINA DE ATUALIZACAO NO GITHUB
 :: =====================================
-:ATUALIZAR
-cls
-echo Atualizar o painel ira baixar a ultima versao do GitHub
-echo e sobrescrever os arquivos locais.
-call :CONFIRMAR
-if errorlevel 1 goto MENU
-
-echo Baixando ultima versao do GitHub...
-set "ZIP_PATH=%TEMP%\painel_atualizado.zip"
-set "TEMP_DIR=%TEMP%\painel_atualizado"
-
-powershell -Command "Invoke-WebRequest -Uri '%GITHUB_REPO%' -OutFile '%ZIP_PATH%'"
-
-if exist "%ZIP_PATH%" (
-    echo Extraindo arquivos...
-    if exist "%TEMP_DIR%" rd /s /q "%TEMP_DIR%"
-    mkdir "%TEMP_DIR%"
-    powershell -Command "Expand-Archive -Force -Path '%ZIP_PATH%' -DestinationPath '%TEMP_DIR%'"
-
-    echo Atualizando arquivos do painel...
-    xcopy "%TEMP_DIR%\painel_de_suporte-main\*" "%~dp0" /s /e /y
-
-    echo.
-    echo Atualizacao concluida em:
-    echo ------------------------
-    echo %date% %time%
-    echo.
-    
-    echo Conteudo do painel updated:
-    echo -----------------------------
-    dir /b "%~dp0"
-    echo.
-
-    rd /s /q "%TEMP_DIR%"
-    del /q "%ZIP_PATH%"
-) else (
-    echo Erro ao baixar o arquivo. Verifique sua conexao.
-)
-pause
+:ABRIR_GITHUB
+start "" "%GITHUB_REPO%"
 goto MENU
