@@ -49,8 +49,8 @@ A opção **27** abre um submenu dedicado, com ferramentas para liberar memória
 | 2 | Fechar processos pesados (Chrome, Edge, Firefox, Opera, Discord, Spotify, Teams, Steam, OneDrive) |
 | 3 | Limpar arquivos temporários |
 | 4 | Esvaziar Lixeira |
-| 6 | Reiniciar o Windows Explorer |
-| 7 | Otimização Completa (executa as opções 2 a 6 em sequência) |
+| 5 | Reiniciar o Windows Explorer |
+| 6 | Otimização Completa (executa as opções 2 a 6 em sequência) |
 | 0 | Voltar ao menu principal |
 
 ## ✅ Requisitos
