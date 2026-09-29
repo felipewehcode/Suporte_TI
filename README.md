@@ -35,7 +35,7 @@ Criado por **Felipe Wehmuth**.
 | 25 | Baixar arquivo via HTTPS |
 | 26 | Gerar relatório de políticas de grupo (gpresult) |
 | 27 | Otimizador de Memória (Swap/RAM) — submenu dedicado |
-| U | Atualizar o próprio script via GitHub |
+| U |  GitHub | Felipe Wehmuth
 
 Cada opção mostra antes de rodar: o que o comando faz, tempo estimado e se afeta arquivos pessoais do usuário — para evitar execuções acidentais.
 
@@ -49,12 +49,9 @@ A opção **27** abre um submenu dedicado, com ferramentas para liberar memória
 | 2 | Fechar processos pesados (Chrome, Edge, Firefox, Opera, Discord, Spotify, Teams, Steam, OneDrive) |
 | 3 | Limpar arquivos temporários |
 | 4 | Esvaziar Lixeira |
-| 5 | Limpar Standby List (requer `RAMMap.exe` na mesma pasta do script) |
 | 6 | Reiniciar o Windows Explorer |
 | 7 | Otimização Completa (executa as opções 2 a 6 em sequência) |
 | 0 | Voltar ao menu principal |
-
-> Para a opção **5** e a **Otimização Completa** funcionarem por completo, baixe o `RAMMap.exe` (Sysinternals) e coloque-o na mesma pasta do `.bat`. Se o arquivo não for encontrado, o script avisa e segue sem travar.
 
 ## ✅ Requisitos
 
