@@ -4,6 +4,26 @@ Ferramenta em batch (`.bat`) que reúne, em um único menu, os comandos e rotina
 
 Criado por **Felipe Wehmuth**.
 
+⚠️ Aviso de Segurança e Responsabilidade
+
+Este projeto contém arquivos .bat que podem solicitar ou utilizar privilégios de Administrador (Admin) para executar determinadas operações no Windows.
+
+Atenção aos riscos:
+
+A execução com privilégios de administrador permite alterações em configurações e componentes importantes do sistema operacional.
+
+O uso incorreto pode causar alterações indesejadas, falhas no sistema ou comprometimento da segurança do equipamento.
+
+Em ambientes corporativos, a execução pode violar políticas internas de segurança, controle de acesso e gerenciamento de TI.
+
+A utilização em computadores de empresas deve ocorrer somente com autorização expressa do responsável pelo setor de TI.
+
+Recomendação: Antes de executar qualquer arquivo, analise seu conteúdo e compreenda as operações realizadas. Sempre que possível, teste em um ambiente controlado ou máquina virtual.
+
+Isenção de responsabilidade: O autor não se responsabiliza por danos, perdas de dados, alterações indevidas ou problemas decorrentes do uso inadequado dos scripts. A utilização é de responsabilidade exclusiva do usuário.
+
+Este projeto tem finalidade educacional e de apoio técnico, não devendo ser utilizado para contornar políticas de segurança ou restrições administrativas de organizações.
+
 ## ✨ Funcionalidades
 
 | # | Opção |
